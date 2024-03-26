@@ -231,6 +231,12 @@ const EditSlashCommand: SlashCommand = {
         (item: ContextItemWithId) => item.id.providerTitle === "code"
       );
     }
+    let shouldAbort = false;
+
+    signal?.addEventListener("abort", () => {
+      shouldAbort = true;
+      console.log("Aborted from signal in edit ts");
+    });
 
     if (!contextItemToEdit) {
       yield "Select (highlight and press `cmd+shift+L` (MacOS) / `ctrl+shift+L` (Windows)) the code that you want to edit first";
@@ -278,9 +284,13 @@ const EditSlashCommand: SlashCommand = {
 
     let linesToDisplay: string[] = [];
 
-    async function sendDiffUpdate(lines: string[], final: boolean = false) {
+    async function sendDiffUpdate(
+      lines: string[],
+      final: boolean = false,
+      shouldAbort?: boolean
+    ) {
       let completion = lines.join("\n");
-      if (signal?.aborted) {
+      if (shouldAbort) {
         console.log("Aborted from signal in  send diff update edit ts");
         return;
       }
@@ -517,7 +527,7 @@ const EditSlashCommand: SlashCommand = {
         break;
       }
 
-      if (signal?.aborted) {
+      if (shouldAbort) {
         console.log("Aborted from signal in edit ts");
         break;
       }
@@ -583,7 +593,9 @@ const EditSlashCommand: SlashCommand = {
           unfinishedLine?.startsWith("<")
             ? commonWhitespace
             : commonWhitespace + unfinishedLine,
-        ])
+        ]),
+        false,
+        shouldAbort
       );
     }
 
@@ -600,7 +612,9 @@ const EditSlashCommand: SlashCommand = {
       currentLineInFile += 1;
     }
 
-    await sendDiffUpdate(lines, true);
+    if (!shouldAbort) {
+      await sendDiffUpdate(lines, true, shouldAbort);
+    }
 
     if (params?.recap) {
       const prompt = `This is the code before editing:
