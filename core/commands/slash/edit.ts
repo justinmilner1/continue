@@ -54,7 +54,7 @@ export async function getPromptParts(
   fullFileContents: string,
   model: ILLM,
   input: string,
-  tokenLimit: number | undefined,
+  tokenLimit: number | undefined
 ) {
   let maxTokens = Math.floor(model.contextLength / 2);
 
@@ -119,7 +119,7 @@ export async function getPromptParts(
       fileSuffix = lastLine + fileSuffix;
       rif.contents = rif.contents.substring(
         0,
-        rif.contents.length - lastLine.length,
+        rif.contents.length - lastLine.length
       );
       lines = rif.contents.split(/\r?\n/);
       lastLine = lines[lines.length - 1] || null;
@@ -141,7 +141,7 @@ function compilePrompt(
   filePrefix: string,
   contents: string,
   fileSuffix: string,
-  input: string,
+  input: string
 ): string {
   if (contents.trim() == "") {
     // Separate prompt for insertion at the cursor, the other tends to cause it to repeat whole file
@@ -213,14 +213,22 @@ function lineToBeIgnored(line: string, isFirstLine: boolean = false): boolean {
 const EditSlashCommand: SlashCommand = {
   name: "edit",
   description: "Edit selected code",
-  run: async function* ({ ide, llm, input, history, contextItems, params }) {
+  run: async function* ({
+    ide,
+    llm,
+    input,
+    history,
+    contextItems,
+    params,
+    signal,
+  }) {
     let contextItemToEdit = contextItems.find(
       (item: ContextItemWithId) =>
-        item.editing && item.id.providerTitle === "code",
+        item.editing && item.id.providerTitle === "code"
     );
     if (!contextItemToEdit) {
       contextItemToEdit = contextItems.find(
-        (item: ContextItemWithId) => item.id.providerTitle === "code",
+        (item: ContextItemWithId) => item.id.providerTitle === "code"
       );
     }
 
@@ -240,7 +248,7 @@ const EditSlashCommand: SlashCommand = {
     }
     let userInput = stripImages(content).replace(
       `\`\`\`${contextItemToEdit.name}\n${contextItemToEdit.content}\n\`\`\`\n`,
-      "",
+      ""
     );
 
     const rif: RangeInFileWithContents =
@@ -254,7 +262,7 @@ const EditSlashCommand: SlashCommand = {
       fullFileContents,
       llm,
       userInput,
-      params?.tokenLimit,
+      params?.tokenLimit
     );
     const [dedentedContents, commonWhitespace] =
       dedentAndGetCommonWhitespace(contents);
@@ -264,7 +272,7 @@ const EditSlashCommand: SlashCommand = {
     let fullFileContentsLines = fullFileContents.split("\n");
     let fullPrefixLines = fullFileContentsLines.slice(
       0,
-      Math.max(0, rif.range.start.line - 1),
+      Math.max(0, rif.range.start.line - 1)
     );
     let fullSuffixLines = fullFileContentsLines.slice(rif.range.end.line);
 
@@ -272,6 +280,10 @@ const EditSlashCommand: SlashCommand = {
 
     async function sendDiffUpdate(lines: string[], final: boolean = false) {
       let completion = lines.join("\n");
+      if (signal?.aborted) {
+        console.log("Aborted from signal in  send diff update edit ts");
+        return;
+      }
 
       // Don't do this at the very end, just show the inserted code
       if (final) {
@@ -309,7 +321,6 @@ const EditSlashCommand: SlashCommand = {
         fullSuffixLines.join("\n");
 
       let stepIndex = history.length - 1;
-
       await ide.showDiff(rif.filepath, newFileContents, stepIndex);
     }
 
@@ -426,7 +437,7 @@ const EditSlashCommand: SlashCommand = {
 
       // Make sure they are sorted by index
       indicesOfLastMatchedLines = indicesOfLastMatchedLines.sort(
-        (a, b) => a[0] - b[0],
+        (a, b) => a[0] - b[0]
       );
 
       currentBlockLines.push(line);
@@ -457,7 +468,7 @@ const EditSlashCommand: SlashCommand = {
           fileSuffix: fileSuffix,
           systemMessage: llm.systemMessage ?? "",
           // "contextItems": (await sdk.getContextItemChatMessages()).map(x => x.content || "").join("\n\n"),
-        },
+        }
       );
       if (typeof rendered === "string") {
         messages = [
@@ -481,7 +492,7 @@ const EditSlashCommand: SlashCommand = {
       lineStream = filterEnglishLinesAtEnd(filterCodeBlockLines(lineStream));
 
       generator = streamWithNewLines(
-        fixCodeLlamaFirstLineIndentation(lineStream),
+        fixCodeLlamaFirstLineIndentation(lineStream)
       );
     } else {
       async function* gen() {
@@ -490,7 +501,7 @@ const EditSlashCommand: SlashCommand = {
           maxTokens: Math.min(
             maxTokens,
             Math.floor(llm.contextLength / 2),
-            4096,
+            4096
           ),
         })) {
           yield stripImages(chunk.content);
@@ -503,6 +514,11 @@ const EditSlashCommand: SlashCommand = {
     for await (let chunk of generator) {
       // Stop early if it is repeating the fileSuffix or the step was deleted
       if (repeatingFileSuffix) {
+        break;
+      }
+
+      if (signal?.aborted) {
+        console.log("Aborted from signal in edit ts");
         break;
       }
 
@@ -567,7 +583,7 @@ const EditSlashCommand: SlashCommand = {
           unfinishedLine?.startsWith("<")
             ? commonWhitespace
             : commonWhitespace + unfinishedLine,
-        ]),
+        ])
       );
     }
 
