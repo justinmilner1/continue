@@ -120,9 +120,6 @@ export class VsCodeWebviewProtocol {
   ) {
     this.on("abort", (msg) => {
       this.abortedMessageIds.add(msg.messageId);
-      const controller = this.abortControllerMap.get(msg.messageId);
-      console.log("Aborting message", msg.messageId, controller);
-      controller?.abort();
     });
     this.on("showFile", (msg) => {
       this.ide.openFile(msg.data.filepath);
@@ -412,8 +409,8 @@ export class VsCodeWebviewProtocol {
         config,
         signal,
       })) {
-        if (signal.aborted) {
-          console.log("Aborted command/run");
+        if (protocol.abortedMessageIds.has(msg.messageId)) {
+          controller.abort();
           break;
         }
         if (content) {
