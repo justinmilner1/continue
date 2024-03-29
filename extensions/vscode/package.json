@@ -234,6 +234,11 @@
         "when": "continue.diffVisible"
       },
       {
+        "command": "continue.cancelResponse",
+        "mac": "cmd+backspace",
+        "key": "ctrl+backspace"
+      },
+      {
         "command": "continue.acceptVerticalDiffBlock",
         "mac": "alt+cmd+y",
         "key": "alt+ctrl+y"

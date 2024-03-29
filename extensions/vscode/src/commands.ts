@@ -125,6 +125,9 @@ const commandsMap: (
     verticalDiffManager.clearForFilepath(newFilepath, false);
     await diffManager.rejectDiff(newFilepath);
   },
+  "continue.cancelResponse": async () => {
+    await diffManager.cancelResponse();
+  },
   "continue.acceptVerticalDiffBlock": (filepath?: string, index?: number) => {
     verticalDiffManager.acceptRejectVerticalDiffBlock(true, filepath, index);
   },

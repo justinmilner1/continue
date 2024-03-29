@@ -300,6 +300,11 @@ export class DiffManager {
 
     await recordAcceptReject(false, diffInfo);
   }
+
+  async cancelResponse() {
+    //stop streaming
+    this.webviewProtocol?.request("setInactive", undefined);
+  }
 }
 
 async function recordAcceptReject(accepted: boolean, diffInfo: DiffInfo) {
