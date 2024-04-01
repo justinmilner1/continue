@@ -119,7 +119,6 @@ const commandsMap: (
     await diffManager.acceptDiff(newFilepath);
   },
   "continue.rejectDiff": async (newFilepath?: string | vscode.Uri) => {
-    console.log("rejectDiff called")
     if (newFilepath instanceof vscode.Uri) {
       newFilepath = newFilepath.fsPath;
     }

@@ -210,7 +210,6 @@ function GUI(props: GUIProps) {
         isMetaEquivalentKeyPressed(e) &&
         !e.shiftKey
       ) {
-        console.log("dispatching setinactive")
         dispatch(setInactive());
       }
     };

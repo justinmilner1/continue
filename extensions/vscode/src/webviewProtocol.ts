@@ -410,12 +410,10 @@ export class VsCodeWebviewProtocol {
         selectedCode,
         config,
       })) {
-        console.log('yielding')
         if (content) {
           yield { content };
         }
         if (protocol.abortedMessageIds.has(msg.messageId)) {
-          console.log("abort registered") //this is never logged
           protocol.abortedMessageIds.delete(msg.messageId);
           break;
         }
