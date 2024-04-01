@@ -210,7 +210,6 @@ function GUI(props: GUIProps) {
         isMetaEquivalentKeyPressed(e) &&
         !e.shiftKey
       ) {
-        this.webviewProtocol?.request("setInactive", undefined);
         dispatch(setInactive());
       }
     };
