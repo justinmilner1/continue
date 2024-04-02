@@ -162,6 +162,7 @@ const Layout = () => {
   useWebviewListener(
     "viewHistory",
     async () => {
+      console.log("in layout.tsx.viewHistory")
       // Toggle the history page / main page
       if (location.pathname === "/history") {
         navigate("/");

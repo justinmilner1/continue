@@ -132,8 +132,9 @@ export class VsCodeIdeUtils {
 
   showMultiFileEdit(edits: FileEdit[]) {
     vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
+    console.log("creating webviewPanel from ideUtils")
     const panel = vscode.window.createWebviewPanel(
-      "continue.continueGUIView",
+      "continue.continueGUIFullscreenView",
       "Continue",
       vscode.ViewColumn.One,
     );

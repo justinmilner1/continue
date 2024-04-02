@@ -325,6 +325,7 @@ export const stateSlice = createSlice({
       state,
       { payload }: PayloadAction<PersistedSessionInfo | undefined>,
     ) => {
+      console.log("executing newSession")
       if (payload) {
         state.history = payload.history;
         state.title = payload.title;

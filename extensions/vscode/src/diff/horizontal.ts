@@ -54,7 +54,7 @@ export class DiffManager {
     this.setupDirectory();
 
     // Listen for file closes, and if it's a diff file, clean up
-    vscode.workspace.onDidCloseTextDocument((document) => {
+    vscode.workspace.onDidCloseTextDocument((document) => {  
       const newFilepath = document.uri.fsPath;
       const diffInfo = this.diffs.get(newFilepath);
       if (diffInfo) {

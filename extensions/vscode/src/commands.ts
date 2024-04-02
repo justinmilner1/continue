@@ -17,7 +17,7 @@ import { VsCodeWebviewProtocol } from "./webviewProtocol";
 function getFullScreenTab() {
   const tabs = vscode.window.tabGroups.all.flatMap((tabGroup) => tabGroup.tabs);
   return tabs.find(
-    (tab) => (tab.input as any)?.viewType?.endsWith("continue.continueGUIView"),
+    (tab) => (tab.input as any)?.viewType?.endsWith("continue.continueFullScreenView"),
   );
 }
 
@@ -139,19 +139,26 @@ const commandsMap: (
     });
 
     if (!edit) {
-      vscode.commands.executeCommand("continue.continueGUIView.focus");
+      vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     }
   },
   "continue.focusContinueInput": async () => {
-    if (!getFullScreenTab()) {
-      vscode.commands.executeCommand("continue.continueGUIView.focus");
-    }
+    console.log("in focusContinueInput")
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     sidebar.webviewProtocol?.request("focusContinueInput", undefined);
-    addHighlightedCodeToContext(false, sidebar.webviewProtocol);
+    
+  },
+  "continue.focusToSidebar": async () => {
+    console.log("focusing to sidebar")
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
+    sidebar.webviewProtocol?.request("focusContinueInput", undefined);
   },
   "continue.focusContinueInputWithoutClear": async () => {
+    //ToDo: this might be removed
+    console.log("In focusContinueInputWithoutClear")
     if (!getFullScreenTab()) {
-      vscode.commands.executeCommand("continue.continueGUIView.focus");
+      console.log("focusing to continueGUI")
+      vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     }
     sidebar.webviewProtocol?.request(
       "focusContinueInputWithoutClear",
@@ -309,7 +316,7 @@ const commandsMap: (
   },
   "continue.debugTerminal": async () => {
     const terminalContents = await ide.getTerminalContents();
-    vscode.commands.executeCommand("continue.continueGUIView.focus");
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     sidebar.webviewProtocol?.request("userInput", {
       input: `I got the following error, can you please help explain how to fix it?\n\n${terminalContents.trim()}`,
     });
@@ -322,11 +329,11 @@ const commandsMap: (
 
   // Commands without keyboard shortcuts
   "continue.addModel": () => {
-    vscode.commands.executeCommand("continue.continueGUIView.focus");
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     sidebar.webviewProtocol?.request("addModel", undefined);
   },
   "continue.openSettingsUI": () => {
-    vscode.commands.executeCommand("continue.continueGUIView.focus");
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     sidebar.webviewProtocol?.request("openSettings", undefined);
   },
   "continue.sendMainUserInput": (text: string) => {
@@ -363,23 +370,27 @@ const commandsMap: (
     ide.runCommand(text);
   },
   "continue.newSession": () => {
+    console.log("new session button hit")
     sidebar.webviewProtocol?.request("newSession", undefined);
   },
   "continue.viewHistory": () => {
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
     sidebar.webviewProtocol?.request("viewHistory", undefined);
+    console.log("viewHistory button hit")
   },
   "continue.toggleFullScreen": () => {
     // Check if full screen is already open by checking open tabs
     const fullScreenTab = getFullScreenTab();
+    console.log("fullScreenTab: ", fullScreenTab?.isActive)
 
-    // Check if the active editor is the Continue GUI View
-    if (fullScreenTab && fullScreenTab.isActive) {
+    // Check if the active editor is the Continue GUI View (fullscreen)
+    if (fullScreenTab && fullScreenTab.isActive) {  //continue gui tab exists, and is active - so close it
+      //this block will be triggered by keyboard shortcut. If user hits 'x' button, onDidDispose will be triggered
+      console.log("full Screen was active")
       vscode.commands.executeCommand("workbench.action.closeActiveEditor");
       vscode.commands.executeCommand("continue.focusContinueInput");
-      return;
-    }
-
-    if (fullScreenTab) {
+    } else if (fullScreenTab) {  //continue gui tab exists, but is not active - go to the tab
+      console.log("focusing to the tab")
       // Focus the tab
       const openOptions = {
         preserveFocus: true,
@@ -392,34 +403,46 @@ const commandsMap: (
         (fullScreenTab.input as any).uri,
         openOptions,
       );
-      return;
-    }
+    } else {  //continue gui does not exist - create it
+      // Close the sidebar.webviews
+      //vscode.commands.executeCommand("workbench.action.closeSidebar");
+      
+      //close any auxiliary bars
+      vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar"); 
 
-    // Close the sidebar.webviews
-    // vscode.commands.executeCommand("workbench.action.closeSidebar");
-    vscode.commands.executeCommand("workbench.action.closeAuxiliaryBar");
-    // vscode.commands.executeCommand("workbench.action.toggleZenMode");
-    const panel = vscode.window.createWebviewPanel(
-      "continue.continueGUIView",
-      "Continue",
-      vscode.ViewColumn.One,
-    );
-    panel.webview.html = sidebar.getSidebarContent(
-      extensionContext,
-      panel,
-      ide,
-      configHandler,
-      verticalDiffManager,
-      undefined,
-      undefined,
-      true,
-    );
+      //Create the gui panel
+      console.log("creating webview panel from commands.ts")
+      const panel = vscode.window.createWebviewPanel(
+        "continue.continueFullScreenView",
+        "Continue",
+        vscode.ViewColumn.One,
+      );
+      
+      //Add content to gui panel
+      panel.webview.html = sidebar.getSidebarContent(
+        extensionContext,
+        panel,
+        ide,
+        configHandler,
+        verticalDiffManager,
+        undefined,
+        undefined,
+        true,
+      );
+
+      // Add event listener for when the panel is disposed (closed)
+      panel.onDidDispose(() => {
+        console.log("OnDidDispose: Webview panel closed, focusing to sidebar");
+        
+        vscode.commands.executeCommand("continue.focusToSidebar");
+      }, null, extensionContext.subscriptions); // add the listener to the context's subscriptions
+    }
   },
   "continue.selectFilesAsContext": (
     firstUri: vscode.Uri,
     uris: vscode.Uri[],
   ) => {
-    vscode.commands.executeCommand("continue.continueGUIView.focus");
+    vscode.commands.executeCommand("continue.continueGUISidebarView.focus");
 
     for (const uri of uris) {
       addEntireFileToContext(uri, false, sidebar.webviewProtocol);
@@ -461,6 +484,7 @@ const commandsMap: (
     );
   },
 });
+
 
 export function registerAllCommands(
   context: vscode.ExtensionContext,

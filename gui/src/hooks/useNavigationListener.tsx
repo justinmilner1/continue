@@ -38,6 +38,7 @@ export const useNavigationListener = () => {
   useWebviewListener(
     "viewHistory",
     async () => {
+      console.log("in useNavigationListener.viewHistory")
       // Toggle the history page / main page
       if (location.pathname === "/history") {
         navigate("/");

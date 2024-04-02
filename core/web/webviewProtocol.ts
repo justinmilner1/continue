@@ -110,6 +110,7 @@ export type ReverseWebviewProtocol = {
   focusContinueInput: [undefined, void];
   focusContinueInputWithoutClear: [undefined, void];
   focusContinueInputWithNewSession: [undefined, void];
+  focusToSidebar: [undefined, void];
   highlightedCode: [{ rangeInFileWithContents: RangeInFileWithContents }, void];
   addModel: [undefined, void];
   openSettings: [undefined, void];

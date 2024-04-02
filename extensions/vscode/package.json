@@ -46,7 +46,7 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onView:continueGUIView"
+    "onView:continueGUISidebarView"
   ],
   "main": "./out/extension.js",
   "browser": "./out/extension.js",
@@ -356,24 +356,24 @@
         {
           "command": "continue.newSession",
           "group": "navigation@1",
-          "when": "view == continue.continueGUIView"
+          "when": "view == continue.continueGUISidebarView || view == continueGUIFullscreenView"
         },
         {
           "command": "continue.toggleFullScreen",
           "group": "navigation@1",
-          "when": "view == continue.continueGUIView"
+          "when": "view == continue.continueGUISidebarView || view == continueGUIFullscreenView"
         },
         {
           "command": "continue.viewHistory",
           "group": "navigation@1",
-          "when": "view == continue.continueGUIView"
+          "when": "view == continue.continueGUISidebarView || view == continueGUIFullscreenView"
         }
       ],
       "editor/title": [
         {
           "command": "continue.toggleFullScreen",
           "group": "navigation@1",
-          "when": "activeWebviewPanelId == continue.continueGUIView"
+          "when": "activeWebviewPanelId == continue.continueGUISidebarView || activeWebviewPanelId == continue.continueGUIFullscreenView"
         }
       ]
     },
@@ -390,7 +390,7 @@
       "continue": [
         {
           "type": "webview",
-          "id": "continue.continueGUIView",
+          "id": "continue.continueGUISidebarView",
           "name": "",
           "visibility": "visible"
         }
