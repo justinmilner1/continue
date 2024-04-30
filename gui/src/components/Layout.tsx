@@ -167,6 +167,10 @@ const Layout = () => {
     setIndexingTask(data.desc);
   });
 
+  useWebviewListener("indexingFailed", async (data) => {
+    setIndexingFailed(data.message);
+  });
+
   useEffect(() => {
     if (isJetBrains()) {
       return;
@@ -187,6 +191,7 @@ const Layout = () => {
 
   const [indexingProgress, setIndexingProgress] = useState(1);
   const [indexingTask, setIndexingTask] = useState("Indexing Codebase");
+  const [indexingFailed, setIndexingFailed] = useState(""); 
 
   return (
     <LayoutTopDiv>
@@ -254,33 +259,33 @@ const Layout = () => {
                     />
                   )}
 
-                {isJetBrains() || (
-                  <IndexingProgressBar
-                    currentlyIndexing={indexingTask}
-                    completed={indexingProgress * 100}
-                    total={100}
-                  />
-                )}
-              </div>
-              <HeaderButtonWithText
-                text="Help"
-                onClick={() => {
-                  navigate("/help");
-                }}
-              >
-                <QuestionMarkCircleIcon width="1.4em" height="1.4em" />
-              </HeaderButtonWithText>
-              <HeaderButtonWithText
-                onClick={() => {
-                  // navigate("/settings");
-                  postToIde("openConfigJson", undefined);
-                }}
-                text="Configure Continue"
-              >
-                <Cog6ToothIcon width="1.4em" height="1.4em" />
-              </HeaderButtonWithText>
-            </Footer>
-          )}
+              {isJetBrains() || (
+                <IndexingProgressBar
+                  currentlyIndexing={indexingTask}
+                  completed={indexingProgress * 100}
+                  total={100}
+                  indexingFailed={indexingFailed}
+                />
+              )}
+            </div>
+            <HeaderButtonWithText
+              text="Help"
+              onClick={() => {
+                navigate("/help");
+              }}
+            >
+              <QuestionMarkCircleIcon width="1.4em" height="1.4em" />
+            </HeaderButtonWithText>
+            <HeaderButtonWithText
+              onClick={() => {
+                // navigate("/settings");
+                postToIde("openConfigJson", undefined);
+              }}
+              text="Configure Continue"
+            >
+              <Cog6ToothIcon width="1.4em" height="1.4em" />
+            </HeaderButtonWithText>
+          </Footer>
         </GridDiv>
 
         <BottomMessageDiv

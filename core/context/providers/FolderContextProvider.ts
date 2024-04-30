@@ -11,7 +11,7 @@ import { getBasename, getLastNPathParts } from "../../util";
 class FolderContextProvider extends BaseContextProvider {
   static description: ContextProviderDescription = {
     title: "folder",
-    displayTitle: "Folders",
+    displayTitle: "Folder",
     description: "Type to search",
     type: "submenu",
   };
@@ -25,6 +25,7 @@ class FolderContextProvider extends BaseContextProvider {
     );
     return retrieveContextItemsFromEmbeddings(extras, this.options, query);
   }
+
   async loadSubmenuItems(
     args: LoadSubmenuItemsArgs,
   ): Promise<ContextSubmenuItem[]> {

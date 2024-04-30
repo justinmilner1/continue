@@ -19,6 +19,10 @@ export class VerticalPerLineDiffManager {
 
   filepathToCodeLens: Map<string, VerticalDiffCodeLens[]> = new Map();
 
+  private userChangeListener: vscode.Disposable | undefined;
+
+  private userChangeListener: vscode.Disposable | undefined;
+
   constructor(private readonly configHandler: ConfigHandler) {}
 
   createVerticalPerLineDiffHandler(
@@ -97,7 +101,7 @@ export class VerticalPerLineDiffManager {
     vscode.commands.executeCommand("setContext", "continue.diffVisible", false);
   }
 
-  acceptRejectVerticalDiffBlock(
+  acceptRejectVerticalDiffBlock = async (
     accept: boolean,
     filepath?: string,
     index?: number,

@@ -7,9 +7,10 @@ import { LanceDbIndex } from "./LanceDbIndex";
 import { ChunkCodebaseIndex } from "./chunk/ChunkCodebaseIndex";
 import { getComputeDeleteAddRemove } from "./refreshIndex";
 import { CodebaseIndex } from "./types";
+import { postToIde } from "../../gui/src/util/ide";
 
 export class PauseToken {
-  constructor(private _paused: boolean) {}
+  constructor(private _paused: boolean) { }
 
   set paused(value: boolean) {
     this._paused = value;
@@ -20,12 +21,25 @@ export class PauseToken {
   }
 }
 
+export class FailToken {
+  constructor(private _failed: boolean) { }
+
+  set failed(value: boolean) {
+    this._failed = value;
+  }
+
+  get failed(): boolean {
+    return this._failed;
+  }
+}
+
 export class CodebaseIndexer {
   private continueServerClient?: ContinueServerClient;
   constructor(
     private readonly configHandler: ConfigHandler,
     private readonly ide: IDE,
     private readonly pauseToken: PauseToken,
+    private readonly failToken: FailToken,
     private readonly continueServerUrl: string | undefined,
     private readonly userToken: Promise<string | undefined>,
   ) {
@@ -39,7 +53,9 @@ export class CodebaseIndexer {
 
   private async getIndexesToBuild(): Promise<CodebaseIndex[]> {
     const config = await this.configHandler.loadConfig();
+    console.log("config: ", config)
 
+    //Chunk and create embeddings
     const indexes = [
       new ChunkCodebaseIndex(
         this.ide.readFile.bind(this.ide),
@@ -70,7 +86,24 @@ export class CodebaseIndexer {
       return;
     }
 
+    //Test to see if embeddings provider is configured properly
+    try {
+      await config.embeddingsProvider.embed(['sample text']);
+    } catch (error) {
+      //Alert user
+      postToIde("errorPopup", {
+        message: 'Failed to index codebasehere',
+      });
+      //ToDo: Set indexing bar to error state
+      
+
+      console.error("Failed to index codebase: ", error)
+      return
+    }
+
     const indexesToBuild = await this.getIndexesToBuild();
+
+    console.log("indexesToBuild: ", indexesToBuild);
 
     let completedDirs = 0;
 

@@ -362,18 +362,41 @@ export class VerticalPerLineDiffHandler {
     this.greenDecorationManager.shiftDownAfterLine(startLine, offset);
 
     // Shift the codelens objects
-    const blocks =
-      this.editorToVerticalDiffCodeLens
-        .get(this.filepath)
-        ?.filter((x) => x.start !== startLine)
-        .map((x) => {
-          if (x.start > startLine) {
-            return { ...x, start: x.start + offset };
-          }
-          return x;
-        }) || [];
-    this.editorToVerticalDiffCodeLens.set(this.filepath, blocks);
+    this.shiftCodeLensObjects(startLine, offset)
+  }
 
-    this.refreshCodeLens();
+  private shiftCodeLensObjects(startLine: number, offset: number){  
+      // Shift the codelens objects
+      const blocks =
+        this.editorToVerticalDiffCodeLens
+          .get(this.filepath)
+          ?.filter((x) => x.start !== startLine)
+          .map((x) => {
+            if (x.start > startLine) {
+              return { ...x, start: x.start + offset };
+            }
+            return x;
+          }) || [];
+      this.editorToVerticalDiffCodeLens.set(this.filepath, blocks);
+  
+      this.refreshCodeLens();
+    this.shiftCodeLensObjects(startLine, offset)
+  }
+
+  private shiftCodeLensObjects(startLine: number, offset: number){  
+      // Shift the codelens objects
+      const blocks =
+        this.editorToVerticalDiffCodeLens
+          .get(this.filepath)
+          ?.filter((x) => x.start !== startLine)
+          .map((x) => {
+            if (x.start > startLine) {
+              return { ...x, start: x.start + offset };
+            }
+            return x;
+          }) || [];
+      this.editorToVerticalDiffCodeLens.set(this.filepath, blocks);
+  
+      this.refreshCodeLens();
   }
 }

@@ -52,12 +52,14 @@ interface ProgressBarProps {
   completed: number;
   total: number;
   currentlyIndexing?: string;
+  indexingFailed?: string;
 }
 
 const IndexingProgressBar = ({
   completed,
   total,
   currentlyIndexing,
+  indexingFailed
 }: ProgressBarProps) => {
   const fillPercentage = Math.min(100, Math.max(0, (completed / total) * 100));
 
@@ -67,8 +69,12 @@ const IndexingProgressBar = ({
   const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
-    postToIde("index/setPaused", !expanded);
+    postToIde("index/setPaused", !expanded); //listends to expanded
   }, [expanded]);
+
+  useEffect(() => {
+    postToIde("index/setIndexingFailed", !indexingFailed);
+  }, [indexingFailed]);
 
   return (
     <div
@@ -81,7 +87,19 @@ const IndexingProgressBar = ({
       }}
       className="cursor-pointer"
     >
-      {completed >= total ? (
+      {
+        indexingFailed ? ( //red 'failed' dot
+        <>
+        <CircleDiv data-tooltip-id="indexingFailed_dot" color="#cc0"></CircleDiv>
+        {tooltipPortalDiv &&
+          ReactDOM.createPortal(
+            <StyledTooltip id="indexingFailed_dot" place="top">
+              Click to retry indexing
+            </StyledTooltip>,
+            tooltipPortalDiv,
+          )}
+        </>
+        ) : completed >= total ? ( //indexing complete green dot
         <>
           <CircleDiv data-tooltip-id="progress_dot" color="#090"></CircleDiv>
           {tooltipPortalDiv &&
@@ -92,7 +110,7 @@ const IndexingProgressBar = ({
               tooltipPortalDiv,
             )}
         </>
-      ) : expanded ? (
+      ) : expanded ? ( //progress bar
         <>
           <GridDiv
             data-tooltip-id="usage_progress_bar"
@@ -116,7 +134,7 @@ const IndexingProgressBar = ({
               tooltipPortalDiv,
             )}
         </>
-      ) : (
+      ) : ( //yellow 'paused' dot
         <>
           <CircleDiv data-tooltip-id="progress_dot" color="#bb0"></CircleDiv>
           {tooltipPortalDiv &&

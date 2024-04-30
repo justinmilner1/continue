@@ -1,5 +1,5 @@
 import { ConfigHandler } from "core/config/handler";
-import { CodebaseIndexer, PauseToken } from "core/indexing/indexCodebase";
+import { CodebaseIndexer, PauseToken, FailToken } from "core/indexing/indexCodebase";
 import { IdeSettings } from "core/protocol";
 import { getConfigJsonPath, getConfigTsPath } from "core/util/paths";
 import fs from "fs";
@@ -114,6 +114,13 @@ export class VsCodeExtension {
         .getWorkspaceDirs()
         .then((dirs) => this.refreshCodebaseIndex(dirs));
     });
+    const indexingFailedToken = new FailToken(
+      context.globalState.get<boolean>("continue.indexingFailed") === true,
+    );
+    this.webviewProtocol.on("index/setIndexingFailed", (msg) => {
+      context.globalState.update("continue.indexingFailed", msg.data);
+      indexingFailedToken.failed = msg.data;
+    });
 
     this.diffManager.webviewProtocol = this.webviewProtocol;
 
@@ -135,8 +142,9 @@ export class VsCodeExtension {
       this.configHandler,
       this.ide,
       indexingPauseToken,
+      indexingFailedToken,
       ideSettings.remoteConfigServerUrl,
-      userTokenPromise,
+      userTokenPromise
     );
 
     if (
@@ -279,4 +287,13 @@ export class VsCodeExtension {
       this.webviewProtocol.request("indexProgress", update);
     }
   }
+
+  private handleIndexingFailure(errorMessage: string): void {
+    this.webviewProtocol?.request("setIndexingFailed", {
+      message: errorMessage,
+    });
+    // Optionally, log the error and inform the user via the VS Code interface
+    vscode.window.showErrorMessage(`Indexing failed: ${errorMessage}`);
+  }
+
 }
