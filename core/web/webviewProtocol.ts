@@ -132,6 +132,7 @@ export type ReverseWebviewProtocol = {
   indexProgress: [{ progress: number; desc: string }, void];
   setIndexingFailed: [{failed: boolean}, void];
   indexingProgressBarInitialized: [{ready: boolean}, void]
+  errorPopup: [{ message: string }, void];
   newSession: [undefined, void];
   refreshSubmenuItems: [undefined, void];
   setTheme: [{ theme: any }, void];

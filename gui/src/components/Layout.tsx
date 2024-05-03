@@ -164,37 +164,19 @@ const Layout = () => {
     [location, navigate],
   );
 
+  useWebviewListener("errorPopup", async (data) => {
+    postToIde("errorPopup", {
+      message: "test message", //data.message
+    });
+  })
+
   useWebviewListener("indexProgress", async (data) => {
     setIndexingProgress(data.progress);
     setIndexingTask(data.desc);
   });
 
-  // let indexingProgressBarInitialized: boolean = false 
-  // let messageQueue: {failed:boolean}[] = [];
-  // useWebviewListener("indexingProgressBarInitialized", async (data) => { 
-  //   indexingProgressBarInitialized = true
-  //   console.log("webview, initializing progress bar. message queue len: ", messageQueue.length)
-
-  //   for (let i = 0; i < messageQueue.length; i++) {
-  //     setIndexingFailed(messageQueue[i].failed)
-  //   }
-  //   messageQueue = []
-  // });
-
   useWebviewListener("setIndexingFailed", async (data) => {
     setIndexingFailed(data.failed)
-
-    // // Check if bar has been initialized
-    // if (indexingProgressBarInitialized) {
-    //   console.log("no pushing to queue")
-    //   setIndexingFailed(data.failed)
-    // } else {
-    //   console.log("pushing to queue")
-    //   messageQueue.push(data)
-    // }
-    console.log("From layout. setting indexing failed to : ", data.failed)
-    //postToIde("index/setIndexingFailed", {failed: data.failed})
-    //setIndexingFailed(data.failed); //may not needs this if switch to global
   });
 
   useEffect(() => {
