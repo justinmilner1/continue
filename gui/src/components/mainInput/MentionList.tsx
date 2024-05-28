@@ -158,6 +158,66 @@ interface MentionListProps {
 }
 
 const MentionList = forwardRef((props: MentionListProps, ref) => {
+  const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, itemIndex: null });
+
+  const ContextMenu = ({ x, y, onDelete, onClose, item }) => {
+    const adjustedX = x - 50;
+    const adjustedY = y - 50;
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          top: `${adjustedY}px`,
+          left: `${adjustedX}px`,
+          backgroundColor: 'white',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+          borderRadius: '5px',
+          zIndex: 1000,
+        }}
+        onMouseLeave={onClose} 
+      >
+        <button
+          style={{
+            display: 'block',
+            padding: '10px',
+            border: 'none',
+            width: '100%',
+            textAlign: 'left',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+          }}
+          onClick={onDelete}
+        >
+          Delete {item.title}?
+        </button>
+      </div>
+    );
+  };
+  
+  const handleContextMenu = (event, index) => {
+    event.preventDefault(); // Prevent the default context menu
+    setContextMenu({
+      visible: true,
+      x: event.pageX,
+      y: event.pageY,
+      itemIndex: index,
+    });
+  };
+  
+  const deleteItem = (index) => {
+    // Here you can add functionality for deleting the item
+    // For demonstration, let's just log the index
+    console.log("Delete item at index:", index);
+    console.log("deleted: ", allItems[index].title)
+  
+    // Close the context menu
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+  
+  const hideContextMenu = () => {
+    setContextMenu({ ...contextMenu, visible: false });
+  };
+
   const dispatch = useDispatch();
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -286,94 +346,106 @@ const MentionList = forwardRef((props: MentionListProps, ref) => {
   };
 
   return (
-    <ItemsDiv>
-      {querySubmenuItem ? (
-        <QueryInput
-          rows={1}
-          ref={queryInputRef}
-          placeholder={querySubmenuItem.description}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              if (e.shiftKey) {
-                queryInputRef.current.innerText += "\n";
-              } else {
-                props.command({
-                  ...querySubmenuItem,
-                  itemType: querySubmenuItem.type,
-                  query: queryInputRef.current.value,
-                  label: `${querySubmenuItem.label}: ${queryInputRef.current.value}`,
-                });
+    <>
+      <ItemsDiv>
+        {querySubmenuItem ? (
+          <QueryInput
+            rows={1}
+            ref={queryInputRef}
+            placeholder={querySubmenuItem.description}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (e.shiftKey) {
+                  queryInputRef.current.innerText += "\n";
+                } else {
+                  props.command({
+                    ...querySubmenuItem,
+                    itemType: querySubmenuItem.type,
+                    query: queryInputRef.current.value,
+                    label: `${querySubmenuItem.label}: ${queryInputRef.current.value}`,
+                  });
+                }
+              } else if (e.key === "Escape") {
+                setQuerySubmenuItem(undefined);
+                setSubMenuTitle(undefined);
               }
-            } else if (e.key === "Escape") {
-              setQuerySubmenuItem(undefined);
-              setSubMenuTitle(undefined);
-            }
-          }}
-        />
-      ) : (
-        <>
-          {subMenuTitle && <ItemDiv className="mb-2">{subMenuTitle}</ItemDiv>}
-          {/* <CustomScrollbarDiv className="overflow-y-scroll max-h-96"> */}
-          {allItems.length ? (
-            allItems.map((item, index) => (
-              <ItemDiv
-                as="button"
-                className={`item ${
-                  index === selectedIndex ? "is-selected" : ""
-                }`}
-                key={index}
-                onClick={() => selectItem(index)}
-                onMouseEnter={() => setSelectedIndex(index)}
-              >
-                <span className="flex justify-between w-full items-center">
-                  <div className="flex items-center justify-center">
-                    {showFileIconForItem(item) && (
-                      <FileIcon
-                        height="20px"
-                        width="20px"
-                        filename={item.description}
-                      ></FileIcon>
-                    )}
-                    {!showFileIconForItem(item) && (
-                      <>
-                        <DropdownIcon item={item} className="mr-2" />
-                      </>
-                    )}
-                    <span title={item.id}> 
-                      {item.title}
-                    </span>
-                    {"  "}
-                  </div>
-                  <span
-                    style={{
-                      color: vscListActiveForeground,
-                      float: "right",
-                      textAlign: "right",
-                      opacity: index !== selectedIndex ? 0 : 1,
-                      minWidth: "30px",
-                    }}
-                    className="whitespace-nowrap overflow-hidden overflow-ellipsis ml-2 flex items-center"
-                  >
-                    {item.description}
-                    {item.type === "contextProvider" &&
-                      item.contextProvider?.type === "submenu" && (
-                        <ArrowRightIcon
-                          className="ml-2 flex-shrink-0"
-                          width="1.2em"
-                          height="1.2em"
-                        />
+            }}
+          />
+        ) : (
+          <>
+            {subMenuTitle && <ItemDiv className="mb-2">{subMenuTitle}</ItemDiv>}
+            {/* <CustomScrollbarDiv className="overflow-y-scroll max-h-96"> */}
+            {allItems.length ? (
+              allItems.map((item, index) => (
+                <ItemDiv
+                  as="button"
+                  className={`item ${
+                    index === selectedIndex ? "is-selected" : ""
+                  }`}
+                  key={index}
+                  onClick={() => selectItem(index)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  onContextMenu={(e) => handleContextMenu(e, index)}
+                >
+                  <span className="flex justify-between w-full items-center">
+                    <div className="flex items-center justify-center">
+                      {showFileIconForItem(item) && (
+                        <FileIcon
+                          height="20px"
+                          width="20px"
+                          filename={item.description}
+                        ></FileIcon>
                       )}
+                      {!showFileIconForItem(item) && (
+                        <>
+                          <DropdownIcon item={item} className="mr-2" />
+                        </>
+                      )}
+                      <span title={item.id}> 
+                        {item.title}
+                      </span>
+                      {"  "}
+                    </div>
+                    <span
+                      style={{
+                        color: vscListActiveForeground,
+                        float: "right",
+                        textAlign: "right",
+                        opacity: index !== selectedIndex ? 0 : 1,
+                        minWidth: "30px",
+                      }}
+                      className="whitespace-nowrap overflow-hidden overflow-ellipsis ml-2 flex items-center"
+                    >
+                      {item.description}
+                      {item.type === "contextProvider" &&
+                        item.contextProvider?.type === "submenu" && (
+                          <ArrowRightIcon
+                            className="ml-2 flex-shrink-0"
+                            width="1.2em"
+                            height="1.2em"
+                          />
+                        )}
+                    </span>
                   </span>
-                </span>
-              </ItemDiv>
-            ))
-          ) : (
-            <ItemDiv className="item">No results</ItemDiv>
-          )}
-          {/* </CustomScrollbarDiv> */}
-        </>
+                </ItemDiv>
+              ))
+            ) : (
+              <ItemDiv className="item">No results</ItemDiv>
+            )}
+            {/* </CustomScrollbarDiv> */}
+          </>
+        )}
+      </ItemsDiv>
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onDelete={() => deleteItem(contextMenu.itemIndex)}
+          onClose={hideContextMenu}
+          item={allItems[contextMenu.itemIndex]}
+        />
       )}
-    </ItemsDiv>
+    </>
   );
 });
 export default MentionList;
